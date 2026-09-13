@@ -12,7 +12,12 @@ namespace VBRForceLock
         void Awake()
         {
             Logger.LogInfo("VBR Force Lock loaded");
-            new Harmony("vbr.force.lock").PatchAll();
+            var harmony = new Harmony("vbr.force.lock");
+            foreach (var patch in new[] { typeof(MapForcePatch), typeof(ItemLimitPatch) })
+            {
+                try { harmony.PatchAll(patch); }
+                catch (System.Exception e) { Logger.LogError(e); }
+            }
         }
 
         void Update()

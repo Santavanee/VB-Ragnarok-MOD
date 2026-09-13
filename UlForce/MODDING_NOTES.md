@@ -19,6 +19,15 @@ Ringkasan proses & temuan teknis dari sesi modding ini, buat dipakai lanjut ke d
 
 ## Cara build & deploy (wajib diulang tiap ubah kode)
 
+### Title skill search (13 Sep 2026)
+
+- `TitleSkillSearch.cs`: plugin `vbr.force.titlesearch`, search bar native Unity UI di kanan bawah panel medallion Title Settings. Ketik sebagian nama skill (case-insensitive), medallion yang tidak cocok diredupkan dan daftar title kiri/kanan difilter. Tombol X menghapus pencarian; pencarian direset ketika menu dibuka.
+- Pencarian memakai `TitleDataSet.attach.id` → `ExValue.GetPassiveDataSet(id).name`, sama dengan `SingleTitleBlockHandler.DataDaraw`. `status` adalah empat modifier stat, bukan skill tambahan.
+- Hasil dihitung dari medallion yang sudah unlocked (`forceData.IsMedals`). Jumlah stok/rank unit dan biaya tetap diperiksa oleh game; hasil pencarian bukan jaminan title bisa dipasang pada unit tersebut.
+- Patch `MedallionControl.OnOpen` memasang UI sekali per instance. Prefix `TitleListBlockHandler.DrawData` memfilter salinan list tanpa mengubah database atau index title. Hover/pemilihan medallion tetap memakai alur asli game.
+- `Class1.cs` sekarang patch hanya `MapForcePatch` dan `ItemLimitPatch`, masing-masing dengan try/catch, agar tidak ikut memasang patch plugin lain dua kali.
+- Build Debug berhasil. Posisi/ukuran search bar dan interaksi input masih perlu diverifikasi langsung di game; belum ada verifikasi visual runtime.
+
 ```powershell
 # build
 & "C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Current\Bin\amd64\MSBuild.exe" `

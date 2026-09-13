@@ -59,6 +59,7 @@
     <Compile Include="Class1.cs" />
     <Compile Include="CustomUnit.cs" />
     <Compile Include="EquipmentIcon.cs" />
+    <Compile Include="TitleSkillSearch.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
