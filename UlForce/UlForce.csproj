@@ -58,6 +58,9 @@
   <ItemGroup>
     <Compile Include="Class1.cs" />
     <Compile Include="CustomUnit.cs" />
+    <Compile Include="LuluDefinition.cs" />
+    <Compile Include="CustomUnitPortraits.cs" />
+    <Compile Include="MaryDefinition.cs" />
     <Compile Include="EquipmentIcon.cs" />
     <Compile Include="TitleSkillSearch.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

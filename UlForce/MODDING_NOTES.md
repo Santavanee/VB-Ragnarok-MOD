@@ -12,10 +12,24 @@ Ringkasan proses & temuan teknis dari sesi modding ini, buat dipakai lanjut ke d
 ## File-file mod (kondisi saat ini)
 
 - **[Class1.cs](Class1.cs)** — plugin `VBR Force Lock` (namespace `VBRForceLock`, GUID `vbr.force.lock`). Berisi Harmony patch: `MapForcePatch` (kunci force division ke 500 lewat toggle F1) dan `ItemLimitPatch` (naikkan limit item min 100).
-- **[CustomUnit.cs](CustomUnit.cs)** — plugin `VBR Custom Unit` (GUID `vbr.force.customunit`). Nambahin **Faceless Reaper Lulu** (karakter crossover dari game lain di seri VBR) langsung aktif ke roster (barrack=0) begitu save aktif kedetect. Lengkap dengan stat, 9 skill nyata (lihat tabel di bawah), dan portrait custom di **SEMUA 5 titik render** yang ditemukan (lihat poin 7 — riwayat panjang trial-and-error-nya, tapi hasil akhirnya semua kebenerin).
-- **[Assets/lulu.png](Assets/lulu.png)** — crop portrait Lulu (juga ada salinannya sebagai `UlForce_lulu.png` di folder `BepInEx/plugins/` game — **wajib ikut di-copy** tiap deploy, sama kayak DLL). Di-load runtime jadi `Sprite` custom lewat `LoadLuluSprite()`.
+- **[CustomUnit.cs](CustomUnit.cs)** — plugin `VBR Custom Unit` (GUID `vbr.force.customunit`). Mengatur inisialisasi per save, penambahan/refresh Lulu di roster, pembersihan node Research versi lama, dan registrasi patch secara terisolasi.
+- **[LuluDefinition.cs](LuluDefinition.cs)** — identitas, pembuatan template/unit, stat awal, skill, race/slay, dan dialog Lulu. Ubah data karakter di sini.
+- **[CustomUnitPortraits.cs](CustomUnitPortraits.cs)** — pemuatan PNG dan enam patch portrait: atlas icon, kartu detail, roster, Division Info, battle HUD, dan battle viewer. Helper bersama hanya mengganti `sprite` sambil mempertahankan ukuran UI.
+- **[Assets/lulu.png](Assets/lulu.png)** — crop portrait Lulu (juga ada salinannya sebagai `UlForce_lulu.png` di folder `BepInEx/plugins/` game — **wajib ikut di-copy** tiap deploy, sama kayak DLL). Di-load runtime lewat `CustomUnitPortraits.Load()`.
+
+**Refactor 13 Sep 2026**: kode Lulu dipisah berdasarkan tanggung jawab; log `[diag]`, flag `_everCalled`, dan pemindaian/cache Animator dibuang. Data dan alur roster dipertahankan, termasuk perilaku lama `division = -1` saat refresh save. Marker cleanup Research tetap dipakai untuk kompatibilitas save. Build Debug sukses; perbandingan source memverifikasi stat, skill, kosmetik, template, alur roster, dan keenam target Harmony tetap sama. Verifikasi visual runtime setelah refactor belum dilakukan.
 
 **Riwayat**: sempat ada juga unit goblin sederhana ("Custom Unit", trigger F2) sebagai unit custom pertama/percobaan. **Udah dihapus** (28/29 Aug) karena bikin bingung pas battle (unit lain yang emang sengaja goblin ketuker sama Lulu yang portraitnya belum kebenerin waktu itu) dan gak kepake lagi setelah Lulu selesai. Kalau mau nambah unit custom lain lagi, `AddCustomUnit`/`CreateCustomTemplate` di riwayat git/percakapan bisa dijadiin contoh pola-nya (clone `masterList[0]`, timpa `id/name/rank/cost/pay/basic`, `new UnitData(template)`, `barrack=0`).
+
+## Swimsuit Queen Mary (13 Sep 2026)
+
+- `MaryDefinition.cs`: ID `zzz_custom_swimsuit_mary`, nama `Swimsuit Queen Mary`; ditambahkan ke roster saat save diproses. Refresh save mempertahankan division, EXP, dan equipment pemain.
+- Skill dasar: Aqua Boost 40 (`L008`), Replenish Res. 75 (`R005`), Lethal Critical 75 (`I011`), Helmet Split 80 (`I012`, gabungan 50+30 putih), Flank Attack 5 (`I005`), Counter Resist 60 (`I016`), Slayer Defense 80 (`J008`), Treasure Hunt 56 (`R003`, gabungan 36+20 putih).
+- Leader saja: Strat Support 150 (`O002`), Bounty Hunter 8 (`R004`). Tambahan equipment merah tidak dipasang. Slot spear/robe tersedia tetapi kosong; trick/tactics template basis dibersihkan.
+- EXP awal 111597 (Lv.106), loyalty/valor 100, cost 12, rank 17. Base HP 110 menghasilkan HP 2997. Base POW/DEF/SPD/WIS 119/90/48/8 mengikuti growth native, mendekati screenshot (angka screenshot juga dipengaruhi equipment). Tidak ada patch yang memaksa stat UI.
+- `CustomUnitPortraits.cs` menggantikan `LuluPortraits.cs`: enam patch bersama, lookup berdasarkan ID/key/nama battle untuk Lulu dan Mary. `image1[1]` tetap aset vanilla; tidak menyentuh `overrideSprite`.
+- Build Debug berhasil. Template Mary diuji terhadap database game asli: slot/ID/power skill benar, sentinel nama skill benar, HP106=2997, dan template vanilla tidak berubah.
+- Portrait rekonstruksi final ada di `Assets/UlForce_mary.png`, RGBA dengan alpha asli (sudut alpha 0); kotak ikon UI sudah dibuang. `Assets/mary-source.png` dan `Assets/mary-portrait.md` disimpan sebagai sumber/riwayat. PNG dan DLL sudah disalin ke folder plugin game.
 
 ## Cara build & deploy (wajib diulang tiap ubah kode)
 
@@ -26,7 +40,7 @@ Ringkasan proses & temuan teknis dari sesi modding ini, buat dipakai lanjut ke d
 - Hasil dihitung dari medallion yang sudah unlocked (`forceData.IsMedals`). Jumlah stok/rank unit dan biaya tetap diperiksa oleh game; hasil pencarian bukan jaminan title bisa dipasang pada unit tersebut.
 - Patch `MedallionControl.OnOpen` memasang UI sekali per instance. Prefix `TitleListBlockHandler.DrawData` memfilter salinan list tanpa mengubah database atau index title. Hover/pemilihan medallion tetap memakai alur asli game.
 - `Class1.cs` sekarang patch hanya `MapForcePatch` dan `ItemLimitPatch`, masing-masing dengan try/catch, agar tidak ikut memasang patch plugin lain dua kali.
-- Build Debug berhasil. Posisi/ukuran search bar dan interaksi input masih perlu diverifikasi langsung di game; belum ada verifikasi visual runtime.
+- Build Debug berhasil. User mengonfirmasi search bar berjalan sempurna di game pada 13 Sep 2026.
 
 ```powershell
 # build
