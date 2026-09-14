@@ -10,6 +10,7 @@ namespace VBRForceLock
     {
         // Compatibility cleanup for saves touched by the retired Research experiment.
         private const string LeftoverResearchNodeMarker = "Unit custom dari seri VBR lain.";
+        private const string RetiredLuluId = "zzz_custom_lulu";
 
         // Continue/load replaces userData, so initialize once per object, not once per game.
         private userDataSet _lastProcessedUserData;
@@ -36,8 +37,37 @@ namespace VBRForceLock
             _lastProcessedUserData = userData;
 
             RemoveLeftoverResearchNode(userData);
+            RemoveRetiredLulu(userData);
             AddLulu(userData);
             AddMary(userData);
+        }
+
+        private void RemoveRetiredLulu(userDataSet userData)
+        {
+            int removedFromRoster = 0;
+            for (int i = userData.UnitData.player.Count - 1; i >= 0; i--)
+            {
+                if (userData.UnitData.player[i].id == RetiredLuluId)
+                {
+                    userData.UnitData.player.RemoveAt(i);
+                    removedFromRoster++;
+                }
+            }
+
+            int removedFromTemplates = 0;
+            for (int i = userData.UnitDataSet.Count - 1; i >= 0; i--)
+            {
+                if (userData.UnitDataSet[i].id == RetiredLuluId)
+                {
+                    userData.UnitDataSet.RemoveAt(i);
+                    removedFromTemplates++;
+                }
+            }
+
+            if (removedFromRoster > 0 || removedFromTemplates > 0)
+            {
+                Logger.LogInfo("[CustomUnit] Unit lama 'zzz_custom_lulu' dibuang dari save.");
+            }
         }
 
         private void AddMary(userDataSet userData)

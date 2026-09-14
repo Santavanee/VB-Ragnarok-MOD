@@ -42,7 +42,7 @@ namespace VBRForceLock
             UnitData unit = new UnitData(template);
             unit.division = -1;
             unit.barrack = 0;
-            unit.exp = 111597;
+            unit.SetExp(1);
             unit.loyalty = 100;
             unit.valor = 100;
             unit.GetStatus();
