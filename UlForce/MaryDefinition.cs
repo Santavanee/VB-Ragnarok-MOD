@@ -67,8 +67,8 @@ namespace VBRForceLock
         {
             template.skillBase = new List<SkillData>
             {
-                Skill("L008", 40), // Aqua Boost
-                Skill("R005", 75), // Replenish Res.
+                Skill("I007", 200), // Added Attack
+                Skill("R004", 14),  // Bounty Hunter (game reward table only supports levels 1-14).
                 Skill("I011", 75), // Lethal Critical
                 Skill("I012", 80), // Helmet Split: 50 + 30 (both white entries).
                 Skill("I005", 5),  // Flank Attack
