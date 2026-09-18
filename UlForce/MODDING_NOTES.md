@@ -24,8 +24,9 @@ Ringkasan proses & temuan teknis dari sesi modding ini, buat dipakai lanjut ke d
 ## Swimsuit Queen Mary (13 Sep 2026)
 
 - `MaryDefinition.cs`: ID `zzz_custom_swimsuit_mary`, nama `Swimsuit Queen Mary`; ditambahkan ke roster saat save diproses. Refresh save mempertahankan division, EXP, dan equipment pemain.
-- Skill dasar: Aqua Boost 40 (`L008`), Replenish Res. 75 (`R005`), Lethal Critical 75 (`I011`), Helmet Split 80 (`I012`, gabungan 50+30 putih), Flank Attack 5 (`I005`), Counter Resist 60 (`I016`), Slayer Defense 80 (`J008`), Treasure Hunt 56 (`R003`, gabungan 36+20 putih).
+- Skill dasar: Added Attack 200 (`I007`), Bounty Hunter 14 (`R004`), Lethal Critical 75 (`I011`), Helmet Split 80 (`I012`, gabungan 50+30 putih), Flank Attack 5 (`I005`), Counter Resist 60 (`I016`), Slayer Defense 80 (`J008`), Treasure Hunt 56 (`R003`, gabungan 36+20 putih).
 - Leader saja: Strat Support 150 (`O002`), Bounty Hunter 8 (`R004`). Tambahan equipment merah tidak dipasang. Slot spear/robe tersedia tetapi kosong; trick/tactics template basis dibersihkan.
+- **Batas Bounty Hunter**: jangan set `R004` di atas 14. Implementasinya menulis ke `CalcR004[power - 1]`, sedangkan tabel reward hanya berisi 14 elemen (indeks 0–13). Nilai 15 mengakses indeks 14 saat kalkulasi hadiah dan membuat alur akhir battle macet. Nilai 14 sudah diuji aman.
 - EXP awal level 1 (`SetExp(1)`), loyalty/valor 100, cost 12, rank 17. Mary yang sudah tersimpan mempertahankan level dan EXP-nya saat save diproses ulang. Base HP 110 mengikuti growth native. Base POW/DEF/SPD/WIS 119/90/48/8 mengikuti growth native, mendekati screenshot level tinggi (angka screenshot juga dipengaruhi equipment). Tidak ada patch yang memaksa stat UI.
 - `CustomUnitPortraits.cs` menggantikan `LuluPortraits.cs`: enam patch bersama, lookup berdasarkan ID/key/nama battle untuk Lulu dan Mary. `image1[1]` tetap aset vanilla; tidak menyentuh `overrideSprite`.
 - Build Debug berhasil. Template Mary diuji terhadap database game asli: slot/ID/power skill benar, sentinel nama skill benar, HP106=2997, dan template vanilla tidak berubah.
