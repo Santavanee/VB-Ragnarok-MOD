@@ -5,7 +5,7 @@ using HarmonyLib;
 
 namespace VBRForceLock
 {
-    [BepInPlugin("vbr.force.customunit", "VBR Custom Unit", "1.3.0")]
+    [BepInPlugin("vbr.force.customunit", "VBR Custom Unit", "1.4.1")]
     public class CustomUnitPlugin : BaseUnityPlugin
     {
         // Compatibility cleanup for saves touched by the retired Research experiment.
@@ -17,7 +17,7 @@ namespace VBRForceLock
 
         private void Awake()
         {
-            Logger.LogInfo("VBR Custom Unit loaded (Lulu dan Mary otomatis masuk roster)");
+            Logger.LogInfo("VBR Custom Unit loaded (Lulu, Mary, Celestial Nanna, Eclipse Nanna otomatis masuk roster)");
             CustomUnitPortraits.Load(Logger);
             var harmony = new Harmony("vbr.force.customunit");
             foreach (Type patchType in CustomUnitPortraits.PatchTypes)
@@ -38,8 +38,55 @@ namespace VBRForceLock
 
             RemoveLeftoverResearchNode(userData);
             RemoveRetiredLulu(userData);
+            int repaired = CustomUnitRoster.RepairIndices(userData.UnitData.player);
+            if (repaired > 0)
+                Logger.LogInfo("[CustomUnit] Memperbaiki index roster " + repaired + " unit agar sesuai posisi Division.");
             AddLulu(userData);
             AddMary(userData);
+            AddNanna(userData, false);
+            AddNanna(userData, true);
+            foreach (UnitDataSet template in userData.UnitDataSet)
+                if (IsModUnit(template.id)) template.type = "英霊";
+            foreach (UnitData unit in userData.UnitData.player)
+                if (IsModUnit(unit.id))
+                {
+                    unit.type = "英霊";
+                    unit.unitDatas.type = "英霊";
+                }
+        }
+
+        private static bool IsModUnit(string id)
+        {
+            return id != null && id.StartsWith("zzz_custom_", StringComparison.Ordinal);
+        }
+
+        private void AddNanna(userDataSet userData, bool dark)
+        {
+            string id = NannaDefinition.Id(dark);
+            UnitDataSet template = userData.UnitDataSet.Find(u => u.id == id);
+            if (template == null)
+            {
+                template = NannaDefinition.CreateTemplate(userData.UnitDataSet, dark);
+                userData.UnitDataSet.Add(template);
+            }
+            else NannaDefinition.Apply(template, dark);
+            NannaDefinition.ApplySupportSkills(template, userData.UnitDataSet, dark);
+
+            UnitData existing = userData.UnitData.player.Find(u => u.id == id);
+            if (existing != null)
+            {
+                // Preserve division, barrack, EXP, equipment, and player progression on reload.
+                NannaDefinition.Apply(existing.unitDatas, dark);
+                NannaDefinition.ApplySupportSkills(existing.unitDatas, userData.UnitDataSet, dark);
+                NannaDefinition.RefreshSupportSkills(existing);
+                existing.image1[0] = NannaDefinition.PortraitKey(dark);
+                existing.image1[4] = NannaDefinition.PortraitKey(dark);
+                existing.SetBaseSkill(existing.unitDatas, -1);
+                Logger.LogInfo("[CustomUnit] '" + NannaDefinition.Name(dark) + "' sudah ada di roster.");
+                return;
+            }
+            CustomUnitRoster.Add(userData.UnitData.player, NannaDefinition.CreateUnit(template));
+            Logger.LogInfo("[CustomUnit] '" + NannaDefinition.Name(dark) + "' ditambahkan ke roster player.");
         }
 
         private void RemoveRetiredLulu(userDataSet userData)
@@ -49,7 +96,7 @@ namespace VBRForceLock
             {
                 if (userData.UnitData.player[i].id == RetiredLuluId)
                 {
-                    userData.UnitData.player.RemoveAt(i);
+                    CustomUnitRoster.RemoveAt(userData.UnitData.player, userData.Divisions.player, i);
                     removedFromRoster++;
                 }
             }
@@ -91,7 +138,7 @@ namespace VBRForceLock
                 template = MaryDefinition.CreateTemplate(userData.UnitDataSet);
                 userData.UnitDataSet.Add(template);
             }
-            userData.UnitData.player.Add(MaryDefinition.CreateUnit(template));
+            CustomUnitRoster.Add(userData.UnitData.player, MaryDefinition.CreateUnit(template));
             Logger.LogInfo("[CustomUnit] '" + MaryDefinition.Name + "' ditambahkan ke roster player.");
         }
 
@@ -113,8 +160,7 @@ namespace VBRForceLock
             UnitData existing = userData.UnitData.player.Find(u => u.id == LuluDefinition.Id);
             if (existing != null)
             {
-                existing.barrack = 0;
-                existing.division = -1;
+                // Preserve the player's existing division and barrack assignment.
                 // Keep image1[1] unchanged for the battle HUD asset lookup.
                 existing.image1[0] = LuluDefinition.PortraitKey;
                 existing.image1[4] = LuluDefinition.PortraitKey;
@@ -130,7 +176,7 @@ namespace VBRForceLock
             userData.UnitDataSet.Add(template);
 
             UnitData unit = LuluDefinition.CreateUnit(template);
-            userData.UnitData.player.Add(unit);
+            CustomUnitRoster.Add(userData.UnitData.player, unit);
             Logger.LogInfo("[CustomUnit] '" + LuluDefinition.Name + "' ditambahkan ke roster player.");
         }
     }

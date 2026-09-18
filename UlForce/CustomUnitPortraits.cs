@@ -38,6 +38,8 @@ namespace VBRForceLock
         {
             LoadPortrait(log, LuluDefinition.Id, LuluDefinition.Name, LuluDefinition.PortraitKey, LuluDefinition.PortraitFileName);
             LoadPortrait(log, MaryDefinition.Id, MaryDefinition.Name, MaryDefinition.PortraitKey, MaryDefinition.PortraitFileName);
+            foreach (bool dark in new[] { false, true })
+                LoadPortrait(log, NannaDefinition.Id(dark), NannaDefinition.Name(dark), NannaDefinition.PortraitKey(dark), NannaDefinition.PortraitFileName(dark));
         }
 
         private static void LoadPortrait(BepInEx.Logging.ManualLogSource log, string id, string name, string key, string fileName)
@@ -75,6 +77,12 @@ namespace VBRForceLock
         {
             Texture2D texture;
             if (!TextureByAssetKey.TryGetValue(key, out texture)) return null;
+
+            // Battle sprites use native pixels / PPU as world size. Nanna's high-resolution
+            // portraits must occupy the same 195-pixel maximum extent as Mary's sprite.
+            // Keep the original texture resolution for the UI and Division face crops.
+            if (key == NannaDefinition.PortraitKey(false) || key == NannaDefinition.PortraitKey(true))
+                pixelsPerUnit *= Mathf.Max(texture.width, texture.height) / 195f;
 
             string variantKey = key + "|" + pivotX + "|" + pivotY + "|" + pixelsPerUnit;
             Sprite sprite;
@@ -163,6 +171,9 @@ namespace VBRForceLock
                 Sprite sprite;
                 if (make == null || make.name == null || __instance.image == null
                     || !ByBattleName.TryGetValue(make.name, out sprite)) return;
+                // Vanilla Celestial Nanna has the same name but a different native resource.
+                if ((make.name == "Celestial" || make.name == "Eclipse")
+                    && !NannaDefinition.MatchesBattleImage(make.name, make.image)) return;
                 ForceApplySprite(__instance.image.GetComponent<Image>(), sprite);
             }
         }
@@ -172,8 +183,56 @@ namespace VBRForceLock
         {
             private static void Postfix(UnitBlockHandler __instance)
             {
-                ApplyUnitPortrait(__instance, __instance.data, "_Background");
+                UnitData unit = __instance.data;
+                Sprite source;
+                if (unit == null || !ByUnitId.TryGetValue(unit.id, out source)) return;
+                Image target = Traverse.Create(__instance).Field("_Background").GetValue<Image>();
+                if (target == null) return;
+                ForceApplySprite(target, GetDivisionPortrait(unit.id, source, target.rectTransform.rect));
             }
+        }
+
+        private static Sprite GetDivisionPortrait(string id, Sprite source, Rect target)
+        {
+            if (target.width <= 0f || target.height <= 0f) return source;
+
+            // Face anchors use texture coordinates (Y starts at the bottom).
+            // Match the wide native Division portrait with a crop, not a squashed full sprite.
+            float centerX = 0.5f;
+            float centerY = 0.46f;
+            float widthFraction = 0.82f;
+            if (id == LuluDefinition.Id)
+            {
+                centerY = 0.43f;
+                widthFraction = 1f;
+            }
+            else if (id == MaryDefinition.Id)
+            {
+                centerY = 0.62f;
+                widthFraction = 0.9f;
+            }
+
+            Texture2D texture = source.texture;
+            float aspect = target.width / target.height;
+            float width = texture.width * widthFraction;
+            float height = width / aspect;
+            if (height > texture.height)
+            {
+                height = texture.height;
+                width = height * aspect;
+            }
+            Rect crop = new Rect(
+                Mathf.Clamp(texture.width * centerX - width * 0.5f, 0f, texture.width - width),
+                Mathf.Clamp(texture.height * centerY - height * 0.5f, 0f, texture.height - height),
+                width, height);
+            string key = "division|" + id + "|" + aspect;
+            Sprite sprite;
+            if (!SpriteVariants.TryGetValue(key, out sprite))
+            {
+                sprite = Sprite.Create(texture, crop, new Vector2(0.5f, 0.5f), source.pixelsPerUnit);
+                SpriteVariants[key] = sprite;
+            }
+            return sprite;
         }
 
         [HarmonyPatch(typeof(BinaryLoad), nameof(BinaryLoad.LoadSprite), new Type[] { typeof(string), typeof(float), typeof(float), typeof(BinaryLoad.LoadType), typeof(float) })]

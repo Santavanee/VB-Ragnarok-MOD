@@ -4,6 +4,47 @@ Ringkasan proses & temuan teknis dari sesi modding ini, buat dipakai lanjut ke d
 
 ## Tentang proyek
 
+## Eclipse Nanna — perubahan Demon
+
+- Race ditambah Demon (`女神魔飛夜超`), Night Boost 25 diganti Demon Boost 25 (`L004`), Command Night 15 diganti Command Demon 15 (`M004`). Vampiric Attack diganti Added Attack 200 (`I007`), Resist Ailments diganti Flank Attack 90 (`I005`). Race Night tetap dipertahankan. Refresh otomatis berlaku untuk unit existing saat load save.
+
+## Skala battle Nanna (19 Sep 2026)
+
+- PNG Nanna 1385×1136 terlalu besar ketika dirender battle dengan PPU native, dibanding Mary 175×195. `GetSpriteVariant` kini mengalikan PPU kedua Nanna dengan `max(width,height)/195`, sehingga ukuran efektifnya sekitar 195×160 piksel pada PPU pemanggil yang sama.
+- Texture asli tetap resolusi tinggi untuk portrait UI/crop Division. Pivot dan rasio gambar dipertahankan. Build Debug sukses; DLL disalin ke plugin. Skala visual battle perlu dicek di game.
+
+## Nanna Assist/Tactical dan tipe HeroicSpirit
+
+- Celestial mengambil deep copy `trick` dan `tactics` native `m1069`: DmnSlash(A) 10 (`T053`), Azure Sky Dance, Mode: Huginn II, Mode: Muninn II, Ultimate Heavenly Barrier, Gungnir Solas (`T1069_0`–`T1069_4`).
+- Eclipse mengambil paket native Dark Deity Nanna `m1028`: PumpUp(F) 7 (`T042`), Dance of Condemnation, Mode: Gaut, Mode: Grimr, Chief God's Light Array, Gungnir (`T1028_0`–`T1028_4`). Metadata asli dipertahankan agar biaya/efek/lokalisasi sesuai game.
+- Refresh save menyalin kedua list ke instance juga: `SetBaseSkill` sendiri tidak memperbarui `unit.trick`/`unit.tactics`.
+- Semua unit `zzz_custom_` mendapat tipe `英霊` (HeroicSpirit) pada master template, template instance, dan instance roster saat load. EXP/equipment/division dipertahankan.
+- Build Debug, validasi seluruh ID tactic terhadap database asli, isolasi deep copy, tipe Nanna, passive skill, dan regression roster lolos. DLL sudah disalin ke plugin. Pemakaian tactical di battle belum diuji langsung.
+
+## Portrait Division close-up
+
+- `DivisionPortraitPatch` memakai sprite crop khusus dari texture asli untuk Lulu, Mary, dan kedua Nanna. Rasio crop mengikuti rect UI sehingga wajah tidak gepeng; anchor wajah ditentukan per karakter. Sprite crop di-cache dan hanya dipakai pada panel Division.
+- PNG asli, portrait detail, dan sprite battle tetap memakai jalur sebelumnya. Tidak mengubah `overrideSprite` atau ukuran UI. Build Debug dan diff check lolos; DLL sudah disalin ke folder plugin. Hasil framing dalam game belum diverifikasi langsung.
+
+## Fix unit tertukar saat masuk Division (v1.4.1)
+
+- Akar masalah terverifikasi dari decompile: `new UnitData(template)` menyalin `template.index`, sedangkan `DivisionData.SetUnitPlayer` menyimpan `unit.index` lalu getter `DivisionData.unit` membaca `UnitData.player[divs[i]]` langsung. Index instance HARUS sama dengan posisi roster, bukan index master template. Ini menjelaskan Nanna memilih Lulu/Mary.
+- `CustomUnitRoster.Add` mengisi index dari `roster.Count` sebelum append untuk semua unit custom. `RepairIndices` memperbaiki instance existing saat load, sebelum refresh skill. Slot Division yang sudah ada dipertahankan karena nilainya memang posisi roster; tidak diremap memakai index lama yang bisa duplikat.
+- Cleanup retired Lulu menggeser referensi `divs`/`divsBack` sesudah penghapusan agar tetap menunjuk anggota yang sama. Refresh Lulu tidak lagi me-reset division/barrack pemain.
+- Build Debug dan regression `verify-roster.ps1` lolos: append, reproduksi index Nanna menunjuk Lulu/Mary, repair, preservasi data pemain/template/slot, reload idempotent, dan penghapusan retired unit. Validasi `verify-nanna.ps1` juga lolos. DLL disalin ke plugin game; verifikasi interaktif Division masih perlu di game.
+- Jika pemilihan salah sudah tersimpan sebelumnya, anggota yang terlanjur masuk tetap dipertahankan. Setelah restart/load, keluarkan anggota yang salah lalu pilih Nanna kembali.
+
+## Celestial Nanna & Eclipse Nanna (18 Sep 2026)
+
+- `NannaDefinition.cs`: dua unit custom otomatis masuk roster, ID `zzz_custom_celestial_nanna` dan `zzz_custom_eclipse_nanna`. Level awal 1, cost 17, loyalty/valor 100. Reload mempertahankan EXP, division, barrack, dan equipment. Slot two-handed/robe (1/9) kosong, cocok kategori Hero's Great Sword / Assassin Cloak.
+- Celestial mengikuti 8 skill screenshot: All Attack, Light Field 12, Divine Boost 25, Multi-Attack 4, Dimension Slash 25, Godly Physique 60, Equitable Heal 12, Absolute Cure. Leader: Command Divine 15, Strat Barrier 100.
+- Eclipse mengganti Light Field dengan Dark Field 12, Divine Boost dengan Night Boost 25, heal dengan Vampiric Attack 20, Absolute Cure dengan Resist Ailments 100; leader Command Night 15 dan Strat Barrier 100. Konsep: dewi gerhana yang melindungi kaum terlupakan, rambut perak, sayap hitam, armor ungu-emas.
+- Base POW/DEF/SPD/WIS Celestial 142/94/67/34, Eclipse 152/84/72/34; HP base 115 (3306 di Lv112). Stat memakai growth native; angka kartu tidak dipaksa sama screenshot yang sudah level tinggi dan memakai equipment.
+- Portrait transparan: `Assets/UlForce_nanna.png`, `Assets/UlForce_nanna_dark.png`; prompt lengkap dan metode built-in image_gen di `Assets/nanna-portraits.md`. Kedua PNG wajib disalin bersama DLL ke folder plugin.
+- Database asli sudah punya Celestial Nanna (`m1069`). Unit custom terpisah; HUD Nanna memeriksa nama DAN key image bawaan supaya portrait native tidak ikut terganti.
+- Koreksi gotcha clone di bawah: `UnitDataSet.Clone()` ternyata TIDAK menyalin list private `_name`. Nanna memisahkan list tersebut lewat Traverse sebelum menulis nama, termasuk saat refresh. Data nama template sumber dan kedua varian diuji tidak saling berubah.
+- Validasi: build Debug, `powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./verify-nanna.ps1` (database asli, 20 skill ID/nama/sentinel, slot, isolasi template/nama, pembeda HUD native), dan `git diff --check` berhasil. Tampilan serta battle langsung di game belum diuji.
+
 - **Target game**: VenusBlood RAGNAROK International (US), Unity 5.6.7, Mono lawas, dijalankan via **BepInEx 5.4.23.4**.
 - **Proyek**: `UlForce.csproj` — class library .NET Framework 4.7.2, di-build jadi `UlForce.dll` dan di-drop ke folder `BepInEx/plugins/` game.
 - Path game: `E:\GameH\VenusBlood RAGNAROK International (US)\`
