@@ -31,7 +31,9 @@ namespace VBRForceLock
             typeof(BattleViewerPortraitPatch), // Battle sprites/cut-ins (image1[0]).
             typeof(TacticsPortraitPatch),      // Tactics hover icon.
             typeof(SkillCheckPortraitPatch),   // Pre-battle skill summary.
-            typeof(BattleResultPortraitPatch)  // Post-battle unit list.
+            typeof(BattleResultPortraitPatch), // Post-battle unit list.
+            typeof(InfoCut3PortraitPatch),     // Base conquest & unit notifications (cut3).
+            typeof(InfoCut2PortraitPatch)      // Cut-in notifications (cut2).
         };
 
         internal static void Load(BepInEx.Logging.ManualLogSource log)
@@ -344,6 +346,109 @@ namespace VBRForceLock
                 int count = Math.Min(targets.Count, assetKeys.Count);
                 for (int i = 0; i < count; i++)
                     ApplyIconPortrait(targets[i].GetComponent<Image>(), assetKeys[i].TrimEnd('*'));
+            }
+        }
+
+        [HarmonyPatch(typeof(InfoCut3View), "ShowMotion")]
+        private static class InfoCut3PortraitPatch
+        {
+            private static void Postfix(InfoCut3View __instance, string img, ref IEnumerator __result)
+            {
+                Sprite sprite = FindPortraitSprite(img);
+                if (sprite != null && __instance != null)
+                {
+                    Image target = Traverse.Create(__instance).Field("_Image").GetValue<Image>();
+                    __result = new CutinEnumerator(__result, target, sprite);
+                }
+            }
+        }
+
+        [HarmonyPatch(typeof(InfoCut2View), "ShowMotion")]
+        private static class InfoCut2PortraitPatch
+        {
+            private static void Postfix(InfoCut2View __instance, string img, ref IEnumerator __result)
+            {
+                Sprite sprite = FindPortraitSprite(img);
+                if (sprite != null && __instance != null)
+                {
+                    Image target = Traverse.Create(__instance).Field("_Image").GetValue<Image>();
+                    __result = new CutinEnumerator(__result, target, sprite);
+                }
+            }
+        }
+
+        private sealed class CutinEnumerator : IEnumerator, IDisposable
+        {
+            private readonly IEnumerator _original;
+            private readonly Image _image;
+            private readonly Sprite _sprite;
+
+            internal CutinEnumerator(IEnumerator original, Image image, Sprite sprite)
+            {
+                _original = original;
+                _image = image;
+                _sprite = sprite;
+            }
+
+            public object Current
+            {
+                get { return _original != null ? _original.Current : null; }
+            }
+
+            public bool MoveNext()
+            {
+                if (_original == null) return false;
+                bool hasNext = _original.MoveNext();
+                if (_image != null && _sprite != null && _image.sprite != _sprite)
+                {
+                    ForceApplyCutinSprite(_image, _sprite);
+                }
+                return hasNext;
+            }
+
+            public void Reset()
+            {
+                if (_original != null) _original.Reset();
+            }
+
+            public void Dispose()
+            {
+                IDisposable d = _original as IDisposable;
+                if (d != null) d.Dispose();
+            }
+        }
+
+        private static Sprite FindPortraitSprite(string key)
+        {
+            if (string.IsNullOrEmpty(key)) return null;
+            Sprite sprite;
+            if (ByAssetKey.TryGetValue(key, out sprite)) return sprite;
+            if (ByUnitId.TryGetValue(key, out sprite)) return sprite;
+            foreach (var entry in ByAssetKey)
+            {
+                if (key.EndsWith(entry.Key, StringComparison.Ordinal)) return entry.Value;
+            }
+            foreach (var entry in ByUnitId)
+            {
+                if (key.EndsWith(entry.Key, StringComparison.Ordinal)) return entry.Value;
+            }
+            return null;
+        }
+
+        private static void ForceApplyCutinSprite(Image img, Sprite sprite)
+        {
+            if (img == null || sprite == null) return;
+
+            RectTransform rt = img.rectTransform;
+            Vector2 sizeBefore = rt != null ? rt.sizeDelta : Vector2.zero;
+
+            img.sprite = sprite;
+            img.preserveAspect = true;
+            img.SetAllDirty();
+
+            if (rt != null && sizeBefore != Vector2.zero)
+            {
+                rt.sizeDelta = sizeBefore;
             }
         }
 

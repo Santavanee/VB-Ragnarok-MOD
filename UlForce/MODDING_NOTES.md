@@ -424,11 +424,6 @@ Seri `T001`–`T059` itu skill dengan nama SINGKATAN/kode (mis. `T024 AtkForm(B)
   - Sumber: `m0698` (Eternal Promise Anora)
   - Trick: `Barrier(F)` (`T042`) [5]
   - Tactics: `T0698_0` Wedding Vows (Lv.1), `T0698_1` Plasma Barrier (Lv.8), `T0698_2` Wraith Wave (Lv.16), `T0698_3` Second Chance (Lv.32), `T0698_4` Loched Fate (Lv.48).
-- **Swimsuit Queen Mary** (`zzz_custom_swimsuit_mary`):
-  - Sumber: `m0655` (Hel - Sea General / Spear / Aqua)
-  - Trick: `AddedAtk(A)` (`T051`) [25] (Sinergi squad assist untuk Added Attack 200 Mary)
-  - Tactics: `T0655_0` Storm Javelin (Lv.1), `T0655_1` Thunder Lance (Lv.8), `T0655_2` Mist Blade (Lv.16), `T0655_3` Sea Storm Stone (Lv.32), `T0655_4` Blikjandabol (Lv.48).
 - **Celestial / Dark Nanna**:
   - Sumber: `m1069` (Celestial) / `m1028` (Dark)
-
 
