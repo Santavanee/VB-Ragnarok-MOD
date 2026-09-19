@@ -63,6 +63,8 @@
     <Compile Include="CustomUnitPortraits.cs" />
     <Compile Include="MaryDefinition.cs" />
     <Compile Include="NannaDefinition.cs" />
+    <Compile Include="AnoraDefinition.cs" />
+    <Compile Include="MidenDefinition.cs" />
     <Compile Include="EquipmentIcon.cs" />
     <Compile Include="TitleSkillSearch.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -17,7 +17,7 @@ namespace VBRForceLock
 
         private void Awake()
         {
-            Logger.LogInfo("VBR Custom Unit loaded (Lulu, Mary, Celestial Nanna, Eclipse Nanna otomatis masuk roster)");
+            Logger.LogInfo("VBR Custom Unit loaded (Lulu, Mary, Nanna, Anora, Miden otomatis masuk roster)");
             CustomUnitPortraits.Load(Logger);
             var harmony = new Harmony("vbr.force.customunit");
             foreach (Type patchType in CustomUnitPortraits.PatchTypes)
@@ -45,6 +45,8 @@ namespace VBRForceLock
             AddMary(userData);
             AddNanna(userData, false);
             AddNanna(userData, true);
+            AddAnora(userData);
+            AddMiden(userData);
             foreach (UnitDataSet template in userData.UnitDataSet)
                 if (IsModUnit(template.id)) template.type = "英霊";
             foreach (UnitData unit in userData.UnitData.player)
@@ -58,6 +60,48 @@ namespace VBRForceLock
         private static bool IsModUnit(string id)
         {
             return id != null && id.StartsWith("zzz_custom_", StringComparison.Ordinal);
+        }
+
+        private void AddAnora(userDataSet userData)
+        {
+            var template = userData.UnitDataSet.Find(u => u.id == AnoraDefinition.Id);
+            if (template == null)
+            {
+                template = AnoraDefinition.CreateTemplate(userData.UnitDataSet);
+                userData.UnitDataSet.Add(template);
+            }
+            else AnoraDefinition.Apply(template);
+            var existing = userData.UnitData.player.Find(u => u.id == AnoraDefinition.Id);
+            if (existing != null)
+            {
+                AnoraDefinition.Apply(existing.unitDatas);
+                existing.image1[0] = AnoraDefinition.PortraitKey;
+                existing.image1[4] = AnoraDefinition.PortraitKey;
+                existing.SetBaseSkill(existing.unitDatas, -1);
+            }
+            else CustomUnitRoster.Add(userData.UnitData.player, MaryDefinition.CreateUnit(template));
+            Logger.LogInfo("[CustomUnit] White Maiden Anora siap di roster.");
+        }
+
+        private void AddMiden(userDataSet userData)
+        {
+            var template = userData.UnitDataSet.Find(u => u.id == MidenDefinition.Id);
+            if (template == null)
+            {
+                template = MidenDefinition.CreateTemplate(userData.UnitDataSet);
+                userData.UnitDataSet.Add(template);
+            }
+            else MidenDefinition.Apply(template);
+            var existing = userData.UnitData.player.Find(u => u.id == MidenDefinition.Id);
+            if (existing != null)
+            {
+                MidenDefinition.Apply(existing.unitDatas);
+                existing.image1[0] = MidenDefinition.PortraitKey;
+                existing.image1[4] = MidenDefinition.PortraitKey;
+                existing.SetBaseSkill(existing.unitDatas, -1);
+            }
+            else CustomUnitRoster.Add(userData.UnitData.player, MidenDefinition.CreateUnit(template));
+            Logger.LogInfo("[CustomUnit] Twilight Miko Miden siap di roster.");
         }
 
         private void AddNanna(userDataSet userData, bool dark)

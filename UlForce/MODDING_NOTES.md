@@ -4,6 +4,23 @@ Ringkasan proses & temuan teknis dari sesi modding ini, buat dipakai lanjut ke d
 
 ## Tentang proyek
 
+## Twilight Miko Miden (19 Sep 2026)
+
+- `MidenDefinition.cs`, ID `zzz_custom_twilight_miko_miden`, nama `Twilight Miko Miden`, type HeroicSpirit (`英霊`), level awal 1, rank 3 (D-Class), cost 26, pay 2 (mana/ether).
+- Race: `女器神超` (Woman, Mechanical, Divine, Supreme). Slay: `全` (Slay: ∞ / All). Job: 2 (Archer / Bow), slot equipment bow (`equipID[0] = 2`) dan robe/cape (`equipID[1] = 9`) tersedia kosong.
+- Base stat dihitung mundur dari formula native game pada Lv 19 (EXP 3450) dikurangi bonus equipment Estranged Stars (`POW +28, SPD +12, WIS +8`) dan Vermillion Cape (`DEF +36, WIS +12`): `basic.Set(134, 72, 79, 15, 120)` menghasilkan HP 660, POW 180, DEF 118, SPD 102, WIS 39 tepat sesuai screenshot.
+- 8 Skill dasar (outline biru equipment diabaikan): All Attack (`I004` [0]), Full Power Attack (`I015` [80]), Dimension Slash (`I010` [40]), Flank Attack (`I005` [15]), Target Miss (`J013` [0]), Spell Barrier (`E002` [70]), S-Destruct Wall (`J023` [100]), Light Field (`B013` [20]).
+- 2 Leader skill (outline putih): Command Mech (`M010` [20]), Fool's Lie (`H001` [3]).
+- Asset portrait `Assets/UlForce_miden.png` diisolasi dari screenshot dan dibersihkan dari checkerboard/speckle menjadi RGBA transparan penuh. PPU battle di-scale proporsional setara 195px, face crop Division di-anchor pada (0.50, 0.54) width fraction 0.75.
+- Build Debug sukses, semua skill ID tervalidasi database game asli, formula stat Lv 19 terverifikasi bit-exact, DLL dan PNG sudah disalin ke folder BepInEx plugins.
+
+## White Maiden Anora
+
+- `AnoraDefinition.cs`, ID `zzz_custom_white_maiden_anora`, type HeroicSpirit, level awal 1, cost 17, staff/robe kosong. Base stat pilihan mod 20/110/45/85, HP115; race Female/Demon/Divine.
+- Screenshot skill: Defense Only, Treasure Hunt50, Barrier50, Tiny Physique95, Godly Physique100. Group DEF diganti Defense Formation150, Group Divine menjadi Divine Boost100, Group Command menjadi Command Division15. Semua delapan skill dasar aktif; tidak menambahkan assist/tactics yang tidak diberikan.
+- PNG berasal dari sprite user yang dihapus backgroundnya lewat imagegen, bukan konsep buatan awal. Skala battle dibatasi setara195px Mary dan Division crop wajah. Refresh mempertahankan progress dan assignment.
+- Build dan validasi ID/nama skill database asli serta isolasi nama berhasil, alpha PNG diverifikasi. DLL dan PNG disalin ke plugin; visual/battle belum diuji langsung.
+
 ## Eclipse Nanna — perubahan Demon
 
 - Race ditambah Demon (`女神魔飛夜超`), Night Boost 25 diganti Demon Boost 25 (`L004`), Command Night 15 diganti Command Demon 15 (`M004`). Vampiric Attack diganti Added Attack 200 (`I007`), Resist Ailments diganti Flank Attack 90 (`I005`). Race Night tetap dipertahankan. Refresh otomatis berlaku untuk unit existing saat load save.

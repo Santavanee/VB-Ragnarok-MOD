@@ -38,6 +38,8 @@ namespace VBRForceLock
         {
             LoadPortrait(log, LuluDefinition.Id, LuluDefinition.Name, LuluDefinition.PortraitKey, LuluDefinition.PortraitFileName);
             LoadPortrait(log, MaryDefinition.Id, MaryDefinition.Name, MaryDefinition.PortraitKey, MaryDefinition.PortraitFileName);
+            LoadPortrait(log, AnoraDefinition.Id, AnoraDefinition.Name, AnoraDefinition.PortraitKey, AnoraDefinition.PortraitFileName);
+            LoadPortrait(log, MidenDefinition.Id, MidenDefinition.Name, MidenDefinition.PortraitKey, MidenDefinition.PortraitFileName);
             foreach (bool dark in new[] { false, true })
                 LoadPortrait(log, NannaDefinition.Id(dark), NannaDefinition.Name(dark), NannaDefinition.PortraitKey(dark), NannaDefinition.PortraitFileName(dark));
         }
@@ -81,7 +83,7 @@ namespace VBRForceLock
             // Battle sprites use native pixels / PPU as world size. Nanna's high-resolution
             // portraits must occupy the same 195-pixel maximum extent as Mary's sprite.
             // Keep the original texture resolution for the UI and Division face crops.
-            if (key == NannaDefinition.PortraitKey(false) || key == NannaDefinition.PortraitKey(true))
+            if (key == AnoraDefinition.PortraitKey || key == MidenDefinition.PortraitKey || key == NannaDefinition.PortraitKey(false) || key == NannaDefinition.PortraitKey(true))
                 pixelsPerUnit *= Mathf.Max(texture.width, texture.height) / 195f;
 
             string variantKey = key + "|" + pivotX + "|" + pivotY + "|" + pixelsPerUnit;
@@ -201,6 +203,18 @@ namespace VBRForceLock
             float centerX = 0.5f;
             float centerY = 0.46f;
             float widthFraction = 0.82f;
+            if (id == AnoraDefinition.Id)
+            {
+                centerX = 0.39f;
+                centerY = 0.60f;
+                widthFraction = 0.72f;
+            }
+            else if (id == MidenDefinition.Id)
+            {
+                centerX = 0.50f;
+                centerY = 0.54f;
+                widthFraction = 0.75f;
+            }
             if (id == LuluDefinition.Id)
             {
                 centerY = 0.43f;
