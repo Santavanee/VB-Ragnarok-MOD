@@ -4,12 +4,12 @@ using HarmonyLib;
 
 namespace VBRForceLock
 {
-    internal static class MidenDefinition
+    internal static class ElishaDefinition
     {
-        internal const string Id = "zzz_custom_twilight_miko_miden";
-        internal const string Name = "Twilight Miko Miden";
-        internal const string PortraitKey = "zzz_custom_miden_portrait";
-        internal const string PortraitFileName = "UlForce_miden.png";
+        internal const string Id = "zzz_custom_abyss_miko_elisha";
+        internal const string Name = "Abyss Miko Elisha";
+        internal const string PortraitKey = "zzz_custom_elisha_portrait";
+        internal const string PortraitFileName = "UlForce_elisha.png";
 
         internal static UnitDataSet CreateTemplate(List<UnitDataSet> list)
         {
@@ -21,16 +21,16 @@ namespace VBRForceLock
             }
             template.index = max + 1;
             template.id = Id;
-            template.rank = 3; // D-Class
-            template.cost = 26;
-            template.pay = 2;
+            template.rank = 3; // Class-D
+            template.cost = 20;
+            template.pay = 2; // Mana
             template.open = HDDataSetDef.MAXOPEN;
-            // Native growth: at Lv 19 with Estranged Stars (+28 POW, +12 SPD, +8 WIS)
-            // and Vermillion Cape (+36 DEF, +12 WIS), stats reach 180 / 118 / 102 / 39, HP 660.
-            template.basic.Set(134, 72, 79, 15, 120);
-            template.job = 2; // Archer / Bow
-            template.equipID[0] = 2; // Bow slot
-            template.equipID[1] = 9; // Robe / Cape slot
+            // Native growth: base HP 82 scales to ~6211 at Lv 300, matching screenshot HP: 6202.
+            // Caster/Miko distribution with high WIS and support defenses.
+            template.basic.Set(35, 85, 65, 125, 82);
+            template.job = 3; // Staff / Priestess
+            template.equipID[0] = 3; // Staff slot (Caduceus)
+            template.equipID[1] = 9; // Robe / Coat slot (Admiral Coat)
             Apply(template);
             ApplySupportSkills(template, list);
             return template;
@@ -55,44 +55,44 @@ namespace VBRForceLock
             names.SetValue(new List<string>(names.GetValue<List<string>>()));
             template.name = Name;
             template.type = "英霊";
-            template.job = 2;
-            template.divine[0] = 5; // Moon / Night
-            template.divine[1] = -1;
-            template.tribe = "女器神超"; // Woman, Mechanical, Divine, Supreme
-            template.special = "全"; // Slay: All (∞)
-            template.comment = "An Embryo girl calling herself the Miko of Twilight. Behind her calm and kind demeanor lies a dangerous portent of the end.";
+            template.job = 3;
+            template.divine[0] = 1; // Aqua / Abyss
+            template.divine[1] = 5; // Night / Dark
+            template.tribe = "女神死夜超"; // Woman, Divine, Undead, Night, Supreme
+            template.special = "神魔死"; // Slay: Divine, Demon, Undead
+            template.comment = "A Miko of the underworld who hopes to live in the human world. A portion of the Abyss God's power resides within her, and she possesses the authority to act on behalf of the Abyss God.";
             for (int i = 5; i < 10; i++)
             {
-                template.script[i] = "Now, the curtain closes.";
+                template.script[i] = "I hope to be of help to everyone.";
             }
             template.image1[0] = PortraitKey;
             template.image1[4] = PortraitKey;
 
             template.skillBase = new List<SkillData>
             {
-                Skill("I004", 0),   // All Attack
-                Skill("I015", 80),  // Full Power Attack / Max-Power Attack
-                Skill("I010", 40),  // Dimension Slash
-                Skill("I005", 15),  // Flank Attack
-                Skill("J013", 0),   // Target Miss
-                Skill("E002", 70),  // Spell Barrier
-                Skill("J023", 100), // S-Destruct Wall
-                Skill("B013", 20)   // Light Field
+                Skill("L011", 40), // Undead Boost (Dom Undead replacement)
+                Skill("M011", 20), // Command Undead
+                Skill("L019", 20), // Night Boost (Dark Domain replacement)
+                Skill("O002", 75), // Strat Support
+                Skill("J013", 0),  // Target Miss
+                Skill("H014", 0),  // Multi-Ailment (Debilitating replacement)
+                Skill("B012", 20), // Poison Field (M-Poison Field)
+                Skill("F003", 20)  // Division Heal (Group Heal)
             };
 
             template.leader = new List<SkillData>
             {
-                Skill("M010", 20), // Command Mech
-                Skill("H001", 3)   // Fool's Lie
+                Skill("M011", 50), // Command Undead
+                Skill("J007", 0)   // Surround Null
             };
 
         }
 
         internal static void ApplySupportSkills(UnitDataSet template, List<UnitDataSet> masterList)
         {
-            string sourceId = "m1091"; // Queen Sigyn (Demphal Arrow, Charm Haze, Messalina Shaft, Attract Ray, Skoll Sol; OpnSalvo)
+            string sourceId = "m0671";
             UnitDataSet source = masterList.Find(u => u.id == sourceId);
-            if (source == null) throw new System.InvalidOperationException("Missing Miden skill source: " + sourceId);
+            if (source == null) throw new System.InvalidOperationException("Missing Elisha skill source: " + sourceId);
             template.trick = new List<SkillData>();
             foreach (SkillData skill in source.trick)
                 template.trick.Add((SkillData)skill.Clone());

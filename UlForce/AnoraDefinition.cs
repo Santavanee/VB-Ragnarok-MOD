@@ -26,7 +26,21 @@ namespace VBRForceLock
             template.equipID[0] = 3;
             template.equipID[1] = 9;
             Apply(template);
+            ApplySupportSkills(template, list);
             return template;
+        }
+
+        internal static UnitData CreateUnit(UnitDataSet template)
+        {
+            UnitData unit = new UnitData(template);
+            unit.division = -1;
+            unit.barrack = 0;
+            unit.SetExp(1);
+            unit.loyalty = 100;
+            unit.valor = 100;
+            unit.GetStatus();
+            unit.hp.now = unit.hp.max;
+            return unit;
         }
 
         internal static void Apply(UnitDataSet template)
@@ -53,8 +67,29 @@ namespace VBRForceLock
                 Skill("M030", 15) // Command Division
             };
             template.leader = new List<SkillData> { new SkillData(), new SkillData() };
-            for (int i = 0; i < template.trick.Count; i++) template.trick[i] = new SkillData();
-            for (int i = 0; i < template.tactics.Count; i++) template.tactics[i] = new TacticsData();
+        }
+
+        internal static void ApplySupportSkills(UnitDataSet template, List<UnitDataSet> masterList)
+        {
+            string sourceId = "m0698"; // Eternal Promise Anora (Wedding Vows, Plasma Barrier, Wraith Wave, Second Chance, Loched Fate; Barrier)
+            UnitDataSet source = masterList.Find(u => u.id == sourceId);
+            if (source == null) throw new System.InvalidOperationException("Missing Anora skill source: " + sourceId);
+            template.trick = new List<SkillData>();
+            foreach (SkillData skill in source.trick)
+                template.trick.Add((SkillData)skill.Clone());
+            template.tactics = new List<TacticsData>();
+            foreach (TacticsData tactic in source.tactics)
+                template.tactics.Add((TacticsData)tactic.Clone());
+        }
+
+        internal static void RefreshSupportSkills(UnitData unit)
+        {
+            unit.trick = new List<SkillData>();
+            foreach (SkillData skill in unit.unitDatas.trick)
+                unit.trick.Add((SkillData)skill.Clone());
+            unit.tactics = new List<TacticsData>();
+            foreach (TacticsData tactic in unit.unitDatas.tactics)
+                unit.tactics.Add((TacticsData)tactic.Clone());
         }
 
         private static SkillData Skill(string id, int power)

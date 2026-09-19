@@ -17,7 +17,7 @@ namespace VBRForceLock
 
         private void Awake()
         {
-            Logger.LogInfo("VBR Custom Unit loaded (Lulu, Mary, Nanna, Anora, Miden otomatis masuk roster)");
+            Logger.LogInfo("VBR Custom Unit loaded (Lulu, Mary, Nanna, Anora, Miden, Elisha otomatis masuk roster)");
             CustomUnitPortraits.Load(Logger);
             var harmony = new Harmony("vbr.force.customunit");
             foreach (Type patchType in CustomUnitPortraits.PatchTypes)
@@ -47,6 +47,7 @@ namespace VBRForceLock
             AddNanna(userData, true);
             AddAnora(userData);
             AddMiden(userData);
+            AddElisha(userData);
             foreach (UnitDataSet template in userData.UnitDataSet)
                 if (IsModUnit(template.id)) template.type = "英霊";
             foreach (UnitData unit in userData.UnitData.player)
@@ -70,16 +71,22 @@ namespace VBRForceLock
                 template = AnoraDefinition.CreateTemplate(userData.UnitDataSet);
                 userData.UnitDataSet.Add(template);
             }
-            else AnoraDefinition.Apply(template);
+            else
+            {
+                AnoraDefinition.Apply(template);
+                AnoraDefinition.ApplySupportSkills(template, userData.UnitDataSet);
+            }
             var existing = userData.UnitData.player.Find(u => u.id == AnoraDefinition.Id);
             if (existing != null)
             {
                 AnoraDefinition.Apply(existing.unitDatas);
+                AnoraDefinition.ApplySupportSkills(existing.unitDatas, userData.UnitDataSet);
+                AnoraDefinition.RefreshSupportSkills(existing);
                 existing.image1[0] = AnoraDefinition.PortraitKey;
                 existing.image1[4] = AnoraDefinition.PortraitKey;
                 existing.SetBaseSkill(existing.unitDatas, -1);
             }
-            else CustomUnitRoster.Add(userData.UnitData.player, MaryDefinition.CreateUnit(template));
+            else CustomUnitRoster.Add(userData.UnitData.player, AnoraDefinition.CreateUnit(template));
             Logger.LogInfo("[CustomUnit] White Maiden Anora siap di roster.");
         }
 
@@ -91,17 +98,50 @@ namespace VBRForceLock
                 template = MidenDefinition.CreateTemplate(userData.UnitDataSet);
                 userData.UnitDataSet.Add(template);
             }
-            else MidenDefinition.Apply(template);
+            else
+            {
+                MidenDefinition.Apply(template);
+                MidenDefinition.ApplySupportSkills(template, userData.UnitDataSet);
+            }
             var existing = userData.UnitData.player.Find(u => u.id == MidenDefinition.Id);
             if (existing != null)
             {
                 MidenDefinition.Apply(existing.unitDatas);
+                MidenDefinition.ApplySupportSkills(existing.unitDatas, userData.UnitDataSet);
+                MidenDefinition.RefreshSupportSkills(existing);
                 existing.image1[0] = MidenDefinition.PortraitKey;
                 existing.image1[4] = MidenDefinition.PortraitKey;
                 existing.SetBaseSkill(existing.unitDatas, -1);
             }
             else CustomUnitRoster.Add(userData.UnitData.player, MidenDefinition.CreateUnit(template));
             Logger.LogInfo("[CustomUnit] Twilight Miko Miden siap di roster.");
+        }
+
+        private void AddElisha(userDataSet userData)
+        {
+            var template = userData.UnitDataSet.Find(u => u.id == ElishaDefinition.Id);
+            if (template == null)
+            {
+                template = ElishaDefinition.CreateTemplate(userData.UnitDataSet);
+                userData.UnitDataSet.Add(template);
+            }
+            else
+            {
+                ElishaDefinition.Apply(template);
+                ElishaDefinition.ApplySupportSkills(template, userData.UnitDataSet);
+            }
+            var existing = userData.UnitData.player.Find(u => u.id == ElishaDefinition.Id);
+            if (existing != null)
+            {
+                ElishaDefinition.Apply(existing.unitDatas);
+                ElishaDefinition.ApplySupportSkills(existing.unitDatas, userData.UnitDataSet);
+                ElishaDefinition.RefreshSupportSkills(existing);
+                existing.image1[0] = ElishaDefinition.PortraitKey;
+                existing.image1[4] = ElishaDefinition.PortraitKey;
+                existing.SetBaseSkill(existing.unitDatas, -1);
+            }
+            else CustomUnitRoster.Add(userData.UnitData.player, ElishaDefinition.CreateUnit(template));
+            Logger.LogInfo("[CustomUnit] Abyss Miko Elisha siap di roster.");
         }
 
         private void AddNanna(userDataSet userData, bool dark)
@@ -163,12 +203,26 @@ namespace VBRForceLock
 
         private void AddMary(userDataSet userData)
         {
-            UnitData existing = userData.UnitData.player.Find(u => u.id == MaryDefinition.Id);
+            var template = userData.UnitDataSet.Find(u => u.id == MaryDefinition.Id);
+            if (template == null)
+            {
+                template = MaryDefinition.CreateTemplate(userData.UnitDataSet);
+                userData.UnitDataSet.Add(template);
+            }
+            else
+            {
+                MaryDefinition.ApplyAppearance(template);
+                MaryDefinition.ApplySkills(template);
+                MaryDefinition.ApplySupportSkills(template, userData.UnitDataSet);
+            }
+            var existing = userData.UnitData.player.Find(u => u.id == MaryDefinition.Id);
             if (existing != null)
             {
                 // Refresh mod data while preserving the player's division, level, and equipment.
                 MaryDefinition.ApplyAppearance(existing.unitDatas);
                 MaryDefinition.ApplySkills(existing.unitDatas);
+                MaryDefinition.ApplySupportSkills(existing.unitDatas, userData.UnitDataSet);
+                MaryDefinition.RefreshSupportSkills(existing);
                 existing.image1[0] = MaryDefinition.PortraitKey;
                 existing.image1[4] = MaryDefinition.PortraitKey;
                 existing.SetBaseSkill(existing.unitDatas, -1);
@@ -176,12 +230,6 @@ namespace VBRForceLock
                 return;
             }
 
-            UnitDataSet template = userData.UnitDataSet.Find(u => u.id == MaryDefinition.Id);
-            if (template == null)
-            {
-                template = MaryDefinition.CreateTemplate(userData.UnitDataSet);
-                userData.UnitDataSet.Add(template);
-            }
             CustomUnitRoster.Add(userData.UnitData.player, MaryDefinition.CreateUnit(template));
             Logger.LogInfo("[CustomUnit] '" + MaryDefinition.Name + "' ditambahkan ke roster player.");
         }

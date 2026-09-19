@@ -4,6 +4,26 @@ Ringkasan proses & temuan teknis dari sesi modding ini, buat dipakai lanjut ke d
 
 ## Tentang proyek
 
+## Abyss Miko Elisha (19 Sep 2026)
+
+- `ElishaDefinition.cs`, ID `zzz_custom_abyss_miko_elisha`, nama `Abyss Miko Elisha`, type HeroicSpirit (`英霊`), level awal 1, rank 3 (Class-D), cost 20, pay 2 (mana/ether).
+- Race: `女神死夜超` (Woman, Divine, Undead, Night, Supreme). Slay: `神魔死` (Divine, Demon, Undead). Job: 3 (Staff / Priestess), slot equipment staff (`equipID[0] = 3`, Caduceus) dan robe/coat (`equipID[1] = 9`, Admiral Coat) tersedia kosong.
+- Base stat: `basic.Set(35, 85, 65, 125, 82)` — stat HP 82 pada level 300 secara native menghasilkan HP 6211 (mendekati 6202 pada screenshot), dengan alokasi caster/miko support (WIS tinggi 125, pertahanan solid).
+- 8 Skill dasar:
+  - `L011` Undead Boost (40) [pengganti Dom Undead:40]
+  - `M011` Command Undead (20) [Cmd Undead:20]
+  - `L019` Night Boost (20) [pengganti Dark Domain:20]
+  - `O002` Strat Support (75) [Strat Support:75]
+  - `J013` Target Miss (0) [Target Miss]
+  - `H014` Multi-Ailment (0) [pengganti Debilitating]
+  - `B012` Poison Field (20) [M-Poison Field:20]
+  - `F003` Division Heal (20) [Group Heal:20]
+- 2 Leader skill (SS 3):
+  - `M011` Command Undead (50) [Cmd Undead:50]
+  - `J007` Surround Null (0) [Surround Null]
+- Asset portrait `Assets/UlForce_elisha.png` diisolasi dari screenshot dan dibersihkan dari latar belakang/checkerboard menjadi RGBA transparan penuh (1024×1024). Skala battle di-scale setara 195px, face crop Division di-anchor pada (0.52, 0.52) width fraction 0.75.
+- Build Debug sukses, validasi database skill dan scaling HP lolos, DLL dan PNG sudah disalin ke folder BepInEx plugins.
+
 ## Twilight Miko Miden (19 Sep 2026)
 
 - `MidenDefinition.cs`, ID `zzz_custom_twilight_miko_miden`, nama `Twilight Miko Miden`, type HeroicSpirit (`英霊`), level awal 1, rank 3 (D-Class), cost 26, pay 2 (mana/ether).
@@ -373,4 +393,42 @@ T055 HelmSplt(A)           T056 Self-Dst(A)           T057 F-PwrAtk(A)
 T058 CountRes(A)           T059 HeartPrc(A)           B999 x
 ```
 
-Seri `T001`–`T059` itu skill dengan nama SINGKATAN/kode (mis. `T024 AtkForm(B)`, `T053 DmnSlash(A)`, huruf dalam kurung nunjuk kategori aslinya) — kemungkinan varian "compact label" buat tampilan UI yang kepepet ruang (battle log dll), bukan skill efek terpisah. `B999 x` kelihatannya entri placeholder/gak kepake.
+Seri `T001`–`T059` itu skill dengan nama SINGKATAN/kode (mis. `T024 AtkForm(B)`, `T053 DmnSlash(A)`, huruf dalam kurung nunjuk kategori aslinya) — ini adalah skill assist/squad support (kategori `trick` pada `UnitDataSet`). `B999 x` kelihatannya entri placeholder/gak kepake.
+
+## 12. Tactical Skills (`tactics`) & Assist Skills (`trick`)
+
+### Arsitektur Skill Taktis di VBRI
+- Setiap unit di `UnitDataSet` memiliki:
+  - `trick` (`List<SkillData>`): 1 slot squad assist / opening effect (misalnya `T001` OpnSalvo, `T033` SapSquad, `T042` Barrier).
+  - `tactics` (`List<TacticsData>`): 5 slot skill komando taktis yang aktif di pertempuran saat mencapai level tertentu (Lv. 1, 8, 16, 32, 48).
+- Data detail taktis disimpan di `TacticsDataSet.bytes` (berisi ID, nama localized, cost, timing, effect, animation, voice/sound, script).
+- `TacticsData` di unit hanya menyimpan referensi `_id`, `_name`, `_image`, `_voice`, `_script`.
+
+### Aturan & Gotcha Utama
+1. **Gunakan deep copy dari unit native**:
+   Menyalin (`(TacticsData)tactic.Clone()`) dari unit sumber resmi memastikan seluruh ID, formula damage, cost, efek, dan lokalisasi (EN/JP) berfungsi 100% tanpa error format atau bug audio.
+2. **Instance save tidak otomatis update jika cuma ganti template**:
+   `unit.SetBaseSkill(unitDatas, -1)` merefresh passive (`skillBase`, `leader`), tapi **TIDAK** menyalin ulang `unitDatas.tactics` atau `unitDatas.trick` ke `unit.tactics` / `unit.trick`.
+   Maka wajib sediakan fungsi `RefreshSupportSkills(UnitData unit)` yang menyalin ulang list instance dari `unit.unitDatas` ke instance `unit` ketika save dimuat (`existing != null`).
+
+### Sumber Taktis Unit Custom UlForce:
+- **Abyss Miko Elisha** (`zzz_custom_abyss_miko_elisha`):
+  - Sumber: `m0671` (Abyss Miko Elisha canon VB)
+  - Trick: `SapSquad(J)` (`T033`) [20]
+  - Tactics: `T0671_0` Hell Wind (Lv.1), `T0671_1` Death Grave (Lv.8), `T0671_2` Kur's Law (Lv.16), `T0671_3` Feeble's Flood (Lv.32), `T0671_4` Ararat's Calamity (Lv.48).
+- **Twilight Miko Miden** (`zzz_custom_twilight_miko_miden`):
+  - Sumber: `m1091` (Queen Sigyn - Archer)
+  - Trick: `OpnSalvo(S)` (`T001`) [5]
+  - Tactics: `T1091_0` Demphal Arrow (Lv.1), `T1091_1` Charm Haze (Lv.8), `T1091_2` Messalina Shaft (Lv.16), `T1091_3` Attract Ray (Lv.32), `T1091_4` Skoll Sol (Lv.48).
+- **White Maiden Anora** (`zzz_custom_white_maiden_anora`):
+  - Sumber: `m0698` (Eternal Promise Anora)
+  - Trick: `Barrier(F)` (`T042`) [5]
+  - Tactics: `T0698_0` Wedding Vows (Lv.1), `T0698_1` Plasma Barrier (Lv.8), `T0698_2` Wraith Wave (Lv.16), `T0698_3` Second Chance (Lv.32), `T0698_4` Loched Fate (Lv.48).
+- **Swimsuit Queen Mary** (`zzz_custom_swimsuit_mary`):
+  - Sumber: `m0655` (Hel - Sea General / Spear / Aqua)
+  - Trick: `AddedAtk(A)` (`T051`) [25] (Sinergi squad assist untuk Added Attack 200 Mary)
+  - Tactics: `T0655_0` Storm Javelin (Lv.1), `T0655_1` Thunder Lance (Lv.8), `T0655_2` Mist Blade (Lv.16), `T0655_3` Sea Storm Stone (Lv.32), `T0655_4` Blikjandabol (Lv.48).
+- **Celestial / Dark Nanna**:
+  - Sumber: `m1069` (Celestial) / `m1028` (Dark)
+
+

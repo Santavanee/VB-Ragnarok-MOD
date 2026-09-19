@@ -31,9 +31,7 @@ namespace VBRForceLock
             template.equipID[1] = 9; // Robe slot, left empty.
             ApplyAppearance(template);
             ApplySkills(template);
-            // Do not inherit the goblin's trick or tactics.
-            for (int i = 0; i < template.trick.Count; i++) template.trick[i] = new SkillData();
-            for (int i = 0; i < template.tactics.Count; i++) template.tactics[i] = new TacticsData();
+            ApplySupportSkills(template, masterList);
             return template;
         }
 
@@ -81,6 +79,29 @@ namespace VBRForceLock
                 Skill("O002", 150), // Strat Support
                 Skill("R004", 8)    // Bounty Hunter (leader only; no equipment's +4).
             };
+        }
+
+        internal static void ApplySupportSkills(UnitDataSet template, List<UnitDataSet> masterList)
+        {
+            string sourceId = "m0655"; // Hel (Storm Javelin, Thunder Lance, Mist Blade, Sea Storm Stone, Blikjandabol; AddedAtk)
+            UnitDataSet source = masterList.Find(u => u.id == sourceId);
+            if (source == null) throw new System.InvalidOperationException("Missing Mary skill source: " + sourceId);
+            template.trick = new List<SkillData>();
+            foreach (SkillData skill in source.trick)
+                template.trick.Add((SkillData)skill.Clone());
+            template.tactics = new List<TacticsData>();
+            foreach (TacticsData tactic in source.tactics)
+                template.tactics.Add((TacticsData)tactic.Clone());
+        }
+
+        internal static void RefreshSupportSkills(UnitData unit)
+        {
+            unit.trick = new List<SkillData>();
+            foreach (SkillData skill in unit.unitDatas.trick)
+                unit.trick.Add((SkillData)skill.Clone());
+            unit.tactics = new List<TacticsData>();
+            foreach (TacticsData tactic in unit.unitDatas.tactics)
+                unit.tactics.Add((TacticsData)tactic.Clone());
         }
 
         private static SkillData Skill(string id, int power)

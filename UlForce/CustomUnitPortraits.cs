@@ -40,6 +40,7 @@ namespace VBRForceLock
             LoadPortrait(log, MaryDefinition.Id, MaryDefinition.Name, MaryDefinition.PortraitKey, MaryDefinition.PortraitFileName);
             LoadPortrait(log, AnoraDefinition.Id, AnoraDefinition.Name, AnoraDefinition.PortraitKey, AnoraDefinition.PortraitFileName);
             LoadPortrait(log, MidenDefinition.Id, MidenDefinition.Name, MidenDefinition.PortraitKey, MidenDefinition.PortraitFileName);
+            LoadPortrait(log, ElishaDefinition.Id, ElishaDefinition.Name, ElishaDefinition.PortraitKey, ElishaDefinition.PortraitFileName);
             foreach (bool dark in new[] { false, true })
                 LoadPortrait(log, NannaDefinition.Id(dark), NannaDefinition.Name(dark), NannaDefinition.PortraitKey(dark), NannaDefinition.PortraitFileName(dark));
         }
@@ -83,7 +84,7 @@ namespace VBRForceLock
             // Battle sprites use native pixels / PPU as world size. Nanna's high-resolution
             // portraits must occupy the same 195-pixel maximum extent as Mary's sprite.
             // Keep the original texture resolution for the UI and Division face crops.
-            if (key == AnoraDefinition.PortraitKey || key == MidenDefinition.PortraitKey || key == NannaDefinition.PortraitKey(false) || key == NannaDefinition.PortraitKey(true))
+            if (key == AnoraDefinition.PortraitKey || key == MidenDefinition.PortraitKey || key == ElishaDefinition.PortraitKey || key == NannaDefinition.PortraitKey(false) || key == NannaDefinition.PortraitKey(true))
                 pixelsPerUnit *= Mathf.Max(texture.width, texture.height) / 195f;
 
             string variantKey = key + "|" + pivotX + "|" + pivotY + "|" + pixelsPerUnit;
@@ -213,6 +214,12 @@ namespace VBRForceLock
             {
                 centerX = 0.50f;
                 centerY = 0.54f;
+                widthFraction = 0.75f;
+            }
+            else if (id == ElishaDefinition.Id)
+            {
+                centerX = 0.52f;
+                centerY = 0.52f;
                 widthFraction = 0.75f;
             }
             if (id == LuluDefinition.Id)
