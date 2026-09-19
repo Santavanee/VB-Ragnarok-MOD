@@ -66,6 +66,7 @@
     <Compile Include="AnoraDefinition.cs" />
     <Compile Include="MidenDefinition.cs" />
     <Compile Include="ElishaDefinition.cs" />
+    <Compile Include="GoldenLokiDefinition.cs" />
     <Compile Include="EquipmentIcon.cs" />
     <Compile Include="TitleSkillSearch.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

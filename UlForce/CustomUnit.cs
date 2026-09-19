@@ -17,7 +17,7 @@ namespace VBRForceLock
 
         private void Awake()
         {
-            Logger.LogInfo("VBR Custom Unit loaded (Lulu, Mary, Nanna, Anora, Miden, Elisha otomatis masuk roster)");
+            Logger.LogInfo("VBR Custom Unit loaded (Lulu, Mary, Nanna, Anora, Miden, Elisha, Loki otomatis masuk roster)");
             CustomUnitPortraits.Load(Logger);
             var harmony = new Harmony("vbr.force.customunit");
             foreach (Type patchType in CustomUnitPortraits.PatchTypes)
@@ -48,6 +48,7 @@ namespace VBRForceLock
             AddAnora(userData);
             AddMiden(userData);
             AddElisha(userData);
+            AddGoldenLoki(userData);
             foreach (UnitDataSet template in userData.UnitDataSet)
                 if (IsModUnit(template.id)) template.type = "英霊";
             foreach (UnitData unit in userData.UnitData.player)
@@ -61,6 +62,50 @@ namespace VBRForceLock
         private static bool IsModUnit(string id)
         {
             return id != null && id.StartsWith("zzz_custom_", StringComparison.Ordinal);
+        }
+
+        private void AddGoldenLoki(userDataSet userData)
+        {
+            var template = userData.UnitDataSet.Find(u => u.id == GoldenLokiDefinition.Id);
+            if (template != null)
+            {
+                template.open = HDDataSetDef.MAXOPEN;
+            }
+
+            var existing = userData.UnitData.player.Find(u => u.id == GoldenLokiDefinition.Id);
+            if (existing != null)
+            {
+                if (existing.unitDatas != null)
+                {
+                    existing.unitDatas.open = HDDataSetDef.MAXOPEN;
+                }
+
+                if (existing.barrack < 0)
+                {
+                    GoldenLokiDefinition.UnlockUnit(existing);
+                    Logger.LogInfo("[CustomUnit] '" + GoldenLokiDefinition.Name + "' di-unlock dan masuk ke roster player (Level 1).");
+                }
+                else if (existing.level == 175)
+                {
+                    GoldenLokiDefinition.ResetToLevel1(existing);
+                    Logger.LogInfo("[CustomUnit] '" + GoldenLokiDefinition.Name + "' direset ke Level 1 tanpa equipment.");
+                }
+                else
+                {
+                    Logger.LogInfo("[CustomUnit] '" + GoldenLokiDefinition.Name + "' sudah ada di roster (Level " + existing.level + ").");
+                }
+                return;
+            }
+
+            if (template == null)
+            {
+                Logger.LogWarning("[CustomUnit] Template tidak ditemukan: " + GoldenLokiDefinition.Id);
+                return;
+            }
+
+            UnitData unit = GoldenLokiDefinition.CreateUnit(template);
+            CustomUnitRoster.Add(userData.UnitData.player, unit);
+            Logger.LogInfo("[CustomUnit] '" + GoldenLokiDefinition.Name + "' ditambahkan ke roster player (Level 1).");
         }
 
         private void AddAnora(userDataSet userData)

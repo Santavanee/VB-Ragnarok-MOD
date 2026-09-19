@@ -8,12 +8,6 @@ namespace VBRForceLock
     {
         internal const string LightId = "zzz_custom_celestial_nanna";
         internal const string DarkId = "zzz_custom_eclipse_nanna";
-        private static readonly Dictionary<string, string> BattleImages = new Dictionary<string, string>();
-        internal static bool MatchesBattleImage(string name, string image)
-        {
-            string expected;
-            return BattleImages.TryGetValue(name, out expected) && expected == image;
-        }
         internal static string Id(bool dark) { return dark ? DarkId : LightId; }
         internal static string Name(bool dark) { return dark ? "Eclipse Nanna" : "Celestial Nanna"; }
         internal static string PortraitKey(bool dark) { return dark ? "zzz_custom_eclipse_nanna_portrait" : "zzz_custom_celestial_nanna_portrait"; }
@@ -71,7 +65,6 @@ namespace VBRForceLock
                 template.script[i] = dark ? "Even without the sun, I will be your goddess." : "Do I feel like a chief goddess now?";
             template.image1[0] = PortraitKey(dark);
             template.image1[4] = PortraitKey(dark);
-            BattleImages[Name(dark).Split(' ')[0]] = template.image1[1];
             // Keep native image1[1] for battle tag resource loading.
             template.skillBase = new List<SkillData>
             {

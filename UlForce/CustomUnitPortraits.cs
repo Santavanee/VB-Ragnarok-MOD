@@ -15,7 +15,6 @@ namespace VBRForceLock
     {
         private static readonly Dictionary<string, Sprite> ByUnitId = new Dictionary<string, Sprite>();
         private static readonly Dictionary<string, Sprite> ByAssetKey = new Dictionary<string, Sprite>();
-        private static readonly Dictionary<string, Sprite> ByBattleName = new Dictionary<string, Sprite>();
         private static readonly Dictionary<string, Texture2D> TextureByAssetKey = new Dictionary<string, Texture2D>();
         private static readonly Dictionary<string, Sprite> SpriteVariants = new Dictionary<string, Sprite>();
 
@@ -70,7 +69,6 @@ namespace VBRForceLock
                 ByUnitId[id] = sprite;
                 ByAssetKey[key] = sprite;
                 TextureByAssetKey[key] = tex;
-                ByBattleName[name.Split(' ')[0]] = sprite;
             }
             catch (Exception e)
             {
@@ -166,7 +164,6 @@ namespace VBRForceLock
             }
         }
 
-        // Battle tags split names at spaces; match "Faceless" or "Swimsuit".
         [HarmonyPatch(typeof(StatusControl), "SetStatus")]
         private static class BattleHudPortraitPatch
         {
@@ -174,11 +171,8 @@ namespace VBRForceLock
             {
                 MakeCode make = Traverse.Create(__instance).Field("make").GetValue<MakeCode>();
                 Sprite sprite;
-                if (make == null || make.name == null || __instance.image == null
-                    || !ByBattleName.TryGetValue(make.name, out sprite)) return;
-                // Vanilla Celestial Nanna has the same name but a different native resource.
-                if ((make.name == "Celestial" || make.name == "Eclipse")
-                    && !NannaDefinition.MatchesBattleImage(make.name, make.image)) return;
+                if (make == null || string.IsNullOrEmpty(make.file) || __instance.image == null
+                    || !ByAssetKey.TryGetValue(make.file, out sprite)) return;
                 ForceApplySprite(__instance.image.GetComponent<Image>(), sprite);
             }
         }
