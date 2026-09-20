@@ -1,4 +1,4 @@
-﻿using BepInEx;
+using BepInEx;
 using HarmonyLib;
 using UnityEngine;
 
@@ -7,17 +7,12 @@ namespace VBRForceLock
     [BepInPlugin("vbr.force.lock", "VBR Force Lock", "3.3.0")]
     public class ForceLockPlugin : BaseUnityPlugin
     {
-        internal static bool Enabled = false;
-
         void Awake()
         {
             Logger.LogInfo("VBR Force Lock loaded");
             var harmony = new Harmony("vbr.force.lock");
-            foreach (var patch in new[] { typeof(MapForcePatch), typeof(ItemLimitPatch) })
-            {
-                try { harmony.PatchAll(patch); }
-                catch (System.Exception e) { Logger.LogError(e); }
-            }
+            try { harmony.PatchAll(typeof(ItemLimitPatch)); }
+            catch (System.Exception e) { Logger.LogError(e); }
         }
 
         void Update()
@@ -26,10 +21,78 @@ namespace VBRForceLock
                 RefillResources();
 
             if (Input.GetKeyDown(KeyCode.F1))
+                RefillForce();
+        }
+
+        private void RefillForce()
+        {
+            var userData = GameDatas.Instance != null ? GameDatas.Instance.userData : null;
+            if (userData == null || userData.Divisions == null || userData.Divisions.player == null)
             {
-                Enabled = !Enabled;
-                Logger.LogInfo($"[MAP FORCE] Toggle = {Enabled}");
+                Logger.LogInfo("[Force] Load permainan dulu sebelum menekan F1.");
+                return;
             }
+
+            int count = 0;
+            foreach (var div in userData.Divisions.player)
+            {
+                if (div != null)
+                {
+                    div.force = 500;
+                    count++;
+                }
+            }
+
+            // Jika sedang berada di battle, perbarui juga divisi pemain dan UI gauge battle
+            try
+            {
+                var bc = Object.FindObjectOfType<BattleSystem.BattleControl>();
+                if (bc != null && bc.bc != null)
+                {
+                    if (bc.bc.battleDivision != null && bc.bc.battleDivision.Count > 0 && bc.bc.battleDivision[0] != null)
+                    {
+                        bc.bc.battleDivision[0].force = 500;
+                    }
+                    var forceOld = Traverse.Create(bc.bc).Field<System.Collections.Generic.List<int>>("forceOld").Value;
+                    if (forceOld != null && forceOld.Count > 0)
+                    {
+                        forceOld[0] = 500;
+                    }
+                }
+
+                var fvc = Object.FindObjectOfType<BattleSystem.FieldValueControl>();
+                if (fvc != null)
+                {
+                    if (fvc.force != null && fvc.force.Count > 0 && fvc.force[0] != null)
+                        fvc.force[0].text = "5";
+                    if (fvc.gauge != null && fvc.gauge.Count > 0 && fvc.gauge[0] != null)
+                        fvc.gauge[0].fillAmount = 0f;
+                    fvc.ForceP = 0;
+                }
+            }
+            catch (System.Exception ex)
+            {
+                Logger.LogWarning($"[Force] Battle UI update: {ex.Message}");
+            }
+
+            // Refresh tampilan UI map / division list jika sedang terbuka
+            try
+            {
+                foreach (var info in Object.FindObjectsOfType<DivisionInfoHandler>())
+                {
+                    info.OnCallUpdareDraw();
+                }
+                foreach (var list in Object.FindObjectsOfType<DivisionlistHandler>())
+                {
+                    list.OnCallUpdareDraw();
+                }
+            }
+            catch (System.Exception ex)
+            {
+                Logger.LogWarning($"[Force] Map UI update: {ex.Message}");
+            }
+
+            Logger.LogInfo($"[Force] F1: Force untuk {count} divisi pemain diisi penuh (500).");
         }
 
         private void RefillResources()
@@ -61,18 +124,6 @@ namespace VBRForceLock
         }
     }
 
-    [HarmonyPatch(typeof(DataSet.DivisionData), "get_force")]
-    class MapForcePatch
-    {
-        static void Postfix(ref int __result)
-        {
-            if (!ForceLockPlugin.Enabled)
-                return;
-
-            // jangan log di sini (rawan freeze)
-            __result = 500;
-        }
-    }
     // PATCH ITEM LIMIT
     [HarmonyPatch(typeof(DataSet.ItemDataSet), "get_limit")]
     class ItemLimitPatch
