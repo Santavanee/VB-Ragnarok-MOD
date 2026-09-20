@@ -69,6 +69,8 @@
     <Compile Include="GoldenLokiDefinition.cs" />
     <Compile Include="EquipmentIcon.cs" />
     <Compile Include="TitleSkillSearch.cs" />
+    <Compile Include="WinSkipUnlock.cs" />
+    <Compile Include="HeroicSpiritResearch.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
